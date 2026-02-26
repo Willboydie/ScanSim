@@ -114,7 +114,7 @@ to load a saved terrain. Set `plot=True` to visualise upon loading.
 ### Plot anytime to visualise the simulation
 Use
 ```python
-scansim.plotProjection()
+scansim.plotProjectionPath()
 ```
 and
 ```python
