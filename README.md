@@ -1,4 +1,5 @@
 # Adaptive Scanning
+A LiDAR simulation software. Use this repo to generate synthetic terrains and simulate action of a LiDAR module within.
 
 ## Setup
 
@@ -124,8 +125,13 @@ as well as setting `plot=True` in `takeMeasurement` to visualise things.
 
 
 ### A note on speed
-`takeMeasurement` currently runs at an average of 450us (assuming `plot=False`).
+`takeMeasurement` currently runs at an average of 450us (assuming `plot=False`) given the default resolution settings.
+The current approch is 
+1. Reduce the point cloud to bins
+2. Find the bin closest to the incident ray
+3. Search the local bin for the point closest to the incident ray
 
+Any improvements are very welcome! Submit a pull request including your performance metrics.
 
 ### The system makes the following assumptions:
 - X = North, Y = East, Z = Up
