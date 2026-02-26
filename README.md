@@ -48,15 +48,18 @@ scansim = ScanSim.ScanSimulator()
 
 ### 2. Adjust terrain parameters
 
+Synthetic terrain is generated using Gradient-noise–based fractal Brownian motion.
+
 ```python
 scansim.terrain.roughness_amplitude = 0.5
-scansim.terrain.slope_x_deg = 30.0
-scansim.terrain.slope_y_deg = 10.0
-scansim.terrain.lacunarity = 2.0
-scansim.terrain.persistence = 0.3
-scansim.terrain.octaves = 5
-scansim.terrain.base_wavelength = 15
+scansim.terrain.slope_x_deg = 30.0  # Average uphill/downhill angle of the terrain in the x-direction.
+scansim.terrain.slope_y_deg = 10.0  # Average uphill/downhill angle of the terrain in the y-direction.
+scansim.terrain.lacunarity = 2.0  # Factor by which feature size shrinks between successive detail layers.
+scansim.terrain.persistence = 0.3  # How strongly smaller-scale features contribute relative to large-scale ones.
+scansim.terrain.octaves = 5  # Number of progressively smaller-scale terrain features added on top of large hills.
+scansim.terrain.base_wavelength = 15  # Characteristic size (meters) of the largest rolling hills or ground undulations.
 ```
+The values you see here are in fact the defaults, which will be used if not set by the user.
 
 ### 3. Adjust Projection Path Parameters
 ```python
@@ -74,7 +77,7 @@ Only rectangles are currently supported.
 ```python
 scansim.terrain.generate(seed)
 ```
-Generate a terrain with your chosen parameters. `seed` is an integer - different seed values will generate different terrains with the same chosen parameters.
+Generate a terrain with your chosen parameters. `seed` is an integer - different seed values will generate different terrain variant with the same chosen parameters.
 
 
 ### 5. Generate your projection path
