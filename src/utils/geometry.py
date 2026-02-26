@@ -15,79 +15,49 @@ import numpy as np
 # - Note that for this arrangement, roll of the rangefinder beam has no effect on the beam's (world) vector
 
 
-def Rx(phi):
+def Rx(psi):
     '''
     Anticlockwise rotation around X+
     '''
-    c, s = np.cos(phi), np.sin(phi)
+    c, s = np.cos(psi), np.sin(psi)
     return np.array([
         [1, 0, 0],
         [0, c, s],
         [0, -s,  c]
     ])
 
-def Ry(theta):
+def Ry(phi):
     '''
-    Anticlockwise rotation around Y+
+    Clockwise rotation around Y+
     '''
-    c, s = np.cos(theta), np.sin(theta)
+    c, s = np.cos(phi), np.sin(phi)
     return np.array([
         [ c, 0, -s],
         [ 0, 1, 0],
         [s, 0, c]
     ])
 
-def Rz(psi):
+def Rz(theta):
     '''
-    Clockwise rotation around Z+
+    clockwise rotation around Z+
     '''
-    c, s = np.cos(psi), np.sin(psi)
+    c, s = np.cos(theta), np.sin(theta)
     return np.array([
         [c, -s, 0],
         [s,  c, 0],
         [0,  0, 1]
     ])
 
-def rotation(phi, theta, psi):
+def rotation(psi, phi, theta):
     # yaw → pitch → roll
-    return Rx(phi) @ Ry(theta) @ Rz(psi)
+    return Rx(psi) @ Ry(phi) @ Rz(theta)
 
-def calculateBeamVector(
-    roll_device, pitch_device, yaw_device, theta, phi
-):
-    Rm = rotation(roll_device, pitch_device, yaw_device)
+def calculateBeamVector(roll, pitch, yaw, theta, phi):
+    Rm = rotation(roll, pitch, yaw)
     Rg = rotation(0, phi, theta)
 
     forward = np.array([1,0,0])
 
     return Rm @ Rg @ forward
 
-
-def findPointsOnBeamAngle(terrain_points, beam_vector, pose, half_bin_size):
-    '''
-    Finds the terrain bins which lie on the plane parallel to the X and Y components of the beam vector (those pertaining to theta)
-    For beam vector [a, b, c] this plane is defined by the equation ay - bx = 0
-    The plane is offset by the position of the device (ie the origin of the beam)
-    Returns the indices of the terrain bins.
-    '''
-    a, b = beam_vector[0], beam_vector[1]
-    offset_x, offset_y = pose[0], pose[1]
-    indices = []
-    points = []
-    for i, point in enumerate(terrain_points):
-        x, y, z = point
-        if abs(a*(y - offset_y) - b*(x - offset_x)) < half_bin_size:
-            indices.append(i)
-            points.append(point)
-    return indices, points
-
-
-def _3d_diff(x1, y1, z1, x2, y2, z2):
-    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
-
-
-
-
-# if __name__ == "__main__":
-    # print(calculateBeamVector(roll_device=0.3, pitch_device=0.0, yaw_device=0.0, theta=0.3, phi=0.0))
 

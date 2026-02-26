@@ -3,6 +3,8 @@ import numpy as np
 from noise import pnoise2 as noise
 import open3d as o3d
 from datetime import datetime
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 class Terrain:
@@ -16,7 +18,9 @@ class Terrain:
         self.persistence = defaults.PERSISTENCE
         self.lacunarity = defaults.LACUNARITY
         self.roughness_amplitude = defaults.ROUGHNESS_AMPLITUDE
+        
         self.points = None
+
 
     def generate(self, seed, plot=False, save=False):
 
@@ -65,7 +69,8 @@ class Terrain:
         # Final surface
         Z = Z_slope + Z_noise
 
-        self.points = np.column_stack((X.ravel(), Y.ravel(), Z.ravel()))
+        # Convention: x = North, y = East, z = Up (match geometry.py). Negate y so +y = East.
+        self.points = np.column_stack((X.ravel(), -Y.ravel(), Z.ravel()))
         if save:
             self.save_to_file()
         if plot:
@@ -94,12 +99,9 @@ class Terrain:
             self.plot()
 
 
-    def plot(self, points=None, highlight_indices=None):
+    def plot(self, points=None, highlight_indices=None, matplotlib_3d=False):
         if points is None:
             points = self.points
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points.astype(np.float64))
-
         # Color by elevation (Z): low = blue/green, high = yellow/red
         z_min, z_max = points[:, 2].min(), points[:, 2].max()
         z_norm = (points[:, 2] - z_min) / (z_max - z_min + 1e-8)
@@ -109,19 +111,44 @@ class Terrain:
         b = np.clip(2 * (1 - z_norm), 0, 1)
         colors = np.column_stack((r, g, b))
         if highlight_indices is not None:
+            colors = colors.copy()
             colors[highlight_indices] = [0.0, 0.0, 0.0]
+
+        if matplotlib_3d:
+            fig = plt.figure(figsize=(10, 8))
+            ax = fig.add_subplot(111, projection="3d")
+            ax.scatter(
+                points[:, 0], points[:, 1], points[:, 2],
+                c=colors, s=1, alpha=0.8
+            )
+            ax.set_xlabel("x (North)")
+            ax.set_ylabel("y (East)")
+            ax.set_zlabel("z (Up)")
+            ax.set_title(f"Synthetic {self.Lx}m x {self.Lx}m site Terrain (Point Cloud)")
+            plt.tight_layout()
+            plt.show()
+            return
+
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points.astype(np.float64))
         pcd.colors = o3d.utility.Vector3dVector(colors)
+
+        # Coordinate frame at origin (X=red, Y=green, Z=blue), size ~10% of site
+        axis_size = self.Lx * 0.1
+        coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
+            size=axis_size, origin=[0.0, 0.0, 0.0]
+        )
 
         # Visualize
         o3d.visualization.draw_geometries(
-            [pcd],
+            [pcd, coord_frame],
             window_name=f"Synthetic {self.Lx}m x {self.Lx}m site Terrain (Point Cloud)",
             width=1024,
             height=768,
         )
 
 
-    def reduceRes(self, divisor):
+    def reduceResolution(self, divisor):
         """
         Downsample the point cloud on a regular 2D grid, reducing density
         equally in x and y by a factor of `divisor`.
@@ -145,8 +172,8 @@ class Terrain:
         reduced_grid = grid[::divisor, ::divisor, :]
 
         # Flatten back to (N_reduced, 3)
-        reduced_points = reduced_grid.reshape(-1, 3)
-        return reduced_points
+        return reduced_grid.reshape(-1, 3)
+
 
     
     def createContours(self, divisor):
@@ -169,5 +196,5 @@ if __name__ == "__main__":
     terrain = Terrain()
     terrain.generate(seed=123, plot=args.plot, save=args.save)
 
-    reduced_points = terrain.reduceRes(20)
+    reduced_points = terrain.reduceResolution(20)
     terrain.plot(reduced_points)
