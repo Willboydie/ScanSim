@@ -3,7 +3,7 @@ import numpy as np
 # The following system makes the following assumptions:
 # - X = North, Y = East, Z = Up
 # - roll is anticlockwise about X+
-# - pitch is anticlockwise about Y+
+# - pitch is clockwise about Y+
 # - yaw is clockwise about Z+
 # - The local forward "neutral" vector is [1,0,0]
 # - Rotations are performed in the order of yaw (1st) -> pitch (2nd) -> roll (3rd).
@@ -39,7 +39,7 @@ def Ry(phi):
 
 def Rz(theta):
     '''
-    clockwise rotation around Z+
+    Clockwise rotation around Z+
     '''
     c, s = np.cos(theta), np.sin(theta)
     return np.array([
