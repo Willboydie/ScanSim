@@ -48,7 +48,7 @@ scansim = ScanSim.ScanSimulator()
 
 ### 2. Adjust terrain parameters
 
-Synthetic terrain is generated using Gradient-noise–based fractal Brownian motion.
+Synthetic terrain is generated using gradient-noise–based fractal brownian motion.
 
 ```python
 scansim.terrain.roughness_amplitude = 0.5
@@ -97,6 +97,19 @@ scansim.rangefinder.takeMeasurement(theta, phi, plot=False)
 ```
 The function returns a cartesian point which is the point on the terrain which the device is pointed at.
 If the device is pointing away from the generated terrain, the function returns `None`.
+
+
+### Save and load terrains
+Use 
+```python
+scansim.saveTerrain(filename)
+```
+to save the currently generated terrain as a .bin file. `filename` should also contain the relative path.
+
+Use
+```python.scansim.loadTerrain(filename, plot=False)
+```
+to load a saved terrain. Set `plot=True` to visualise upon loading.
 
 ### Plot anytime to visualise the simulation
 Use

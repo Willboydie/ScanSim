@@ -79,11 +79,12 @@ class Terrain:
             self.plot()
 
 
-    def save_to_file(self):
+    def save_to_file(self, filename=None):
         if self.points is None:
             raise ValueError("Must generate a terrain first with generate().")
-        timestamp = datetime.now().strftime("%H.%M_%d-%m")
-        filename = f"../data/terrains/{timestamp}.bin"
+        if filename is None:
+            timestamp = datetime.now().strftime("%H.%M_%d-%m")
+            filename = f"{timestamp}.bin"
         with open(filename, "wb") as f:
             for point in self.points:
                 for component in point:

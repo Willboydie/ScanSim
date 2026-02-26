@@ -33,6 +33,12 @@ class ScanSimulator:
     def plotTerrain(self):
         self.terrain.plot()
 
+    def saveTerrain(self, filename=None):
+        self.terrain.save_to_file(filename)
+
+    def loadTerrain(self, filename, plot=False):
+        self.terrain.load_from_file(filename, plot)
+
 
 
 if __name__ == "__main__":
