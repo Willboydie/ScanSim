@@ -1,47 +1,52 @@
-from types import NoneType
 import Terrain
-import ProjectionPath
 import BeamVector as Beam
-import utils.geometry as geometry
 import numpy as np
+from utils.constants import INCIDENCE_TOLERANCE_RADIUS, RES_REDUCTION_FACTOR_FOR_TARGET_REGION
 import utils.defaults as defaults
 import time
 
-class RangeFinder:
-    def __init__(self, _terrain, _pose):
+class Rangefinder:
+    def __init__(self, _terrain):
         self.terrain = _terrain
-        self.pose = _pose
-        self.resReductionFactor = defaults.RES_REDUCTION_FACTOR_FOR_TARGET_REGION
-        if self.terrain.resolution % self.resReductionFactor != 0 or self.terrain.resolution % 2 != 0:
+        self.pose = defaults.POSE
+        if self.terrain.resolution % RES_REDUCTION_FACTOR_FOR_TARGET_REGION != 0 or self.terrain.resolution % 2 != 0:
             raise ValueError("Terrain resolution must be divisible by the reduction factor, and must be even.")
         self.bin_offsets = self.precomputeBinOffsets()
         self.beam_plus_terrain_points = None
         self.reduced_terrain_points = None
 
 
-    def takeMeasurement(self, theta, phi):
+    def takeMeasurement(self, theta, phi, plot=False):
         if theta <= -np.pi/2 or theta >= np.pi/2:
             raise ValueError("Theta must be between -pi/2 and pi/2.")
         if phi <= -np.pi/2 or phi >= np.pi/2:
             raise ValueError("Phi must be between -pi/2 and pi/2.")
 
         beam = Beam.Beam(self.pose, theta, phi)
-        reduced_res_terrain_points =self.terrain.reduceResolution(self.resReductionFactor)
-        reduced_target_region_points, reduced_target_region_indices = self.getIncidentPoints(reduced_res_terrain_points, beam.origin, beam.vector)
+        reduced_res_terrain_points =self.terrain.reduceResolution(RES_REDUCTION_FACTOR_FOR_TARGET_REGION)
+        reduced_target_region_points, reduced_target_region_indices = self.getIncidentPoint(reduced_res_terrain_points, beam.origin, beam.vector)
         if reduced_target_region_points is None:
+            if plot:
+                self.plotSimulatedMeasurement(theta, phi, index=None)
             return None, None
+
         target_region_indices = self.getFullDensityIndices(reduced_target_region_indices)
         target_region_points = self.terrain.points[target_region_indices]
-        return self.getIncidentPoints(target_region_points, beam.origin, beam.vector, indices=target_region_indices)
+
+        point, index = self.getIncidentPoint(target_region_points, beam.origin, beam.vector, index_map=target_region_indices)
+
+        if plot:
+            self.plotSimulatedMeasurement(theta, phi, index)
+        return point
 
 
-    def getIncidentPoints(
+    def getIncidentPoint(
             self,
             points,
             origin,
             beam_vector,
-            indices=None,
-            radius=defaults.INCIDENCE_TOLERANCE_RADIUS,
+            index_map=None,
+            radius=INCIDENCE_TOLERANCE_RADIUS,
             max_range=np.inf
             ):
 
@@ -74,8 +79,8 @@ class RangeFinder:
         # --- select nearest ---
         local = np.argmin(dist2)
 
-        if indices is not None:
-            return points[idx_valid[local]], indices[idx_valid[local]]
+        if index_map is not None:
+            return points[idx_valid[local]], index_map[idx_valid[local]]
 
         return points[idx_valid[local]], idx_valid[local]
 
@@ -83,7 +88,7 @@ class RangeFinder:
     def getFullDensityIndices(self, reduced_indices):
         reduced_indices = np.atleast_1d(np.asarray(reduced_indices, dtype=int))
         res = self.terrain.resolution
-        r = self.resReductionFactor
+        r = RES_REDUCTION_FACTOR_FOR_TARGET_REGION
 
         # reduced grid width
         n = res // r
@@ -103,7 +108,7 @@ class RangeFinder:
 
     def precomputeBinOffsets(self):
 
-        r = self.resReductionFactor
+        r = RES_REDUCTION_FACTOR_FOR_TARGET_REGION
         res = self.terrain.resolution
 
         half = r // 2
@@ -116,12 +121,19 @@ class RangeFinder:
 
         return dr.ravel() * res + dc.ravel()
 
+
+    def plotSimulatedMeasurement(self, theta, phi, index):
+        self.addBeamPointsForPlotting(theta, phi)
+        beam_indices = np.arange(len(self.terrain.points), len(self.beam_plus_terrain_points))
+        self.terrain.plot(points=self.beam_plus_terrain_points, beam_indices=beam_indices, point_index=index, matplotlib_3d=False)
+
     
     def addBeamPointsForPlotting(self, theta, phi, terrain_points=None):
         if terrain_points is None:
             terrain_points = self.terrain.points
         beam = Beam.Beam(self.pose, theta, phi)
         self.beam_plus_terrain_points = np.vstack((terrain_points, beam.plotting_points))
+
 
     
     def runSpeedTest(self): # Average Measurement Time = 450us
@@ -144,14 +156,8 @@ if __name__ == "__main__":
 
     terrain = Terrain.Terrain()
     terrain.generate(seed=123)
-    pose = [0.0, 0.0, 2.0, 0.0, 0.0, 0.0]
-    rangefinder = RangeFinder(terrain, pose)
-    rangefinder.runSpeedTest()
-    incident_point, incident_index = rangefinder.takeMeasurement(theta=theta, phi=phi)
-    rangefinder.addBeamPointsForPlotting(theta=theta, phi=phi)
-    if incident_index is None:
-        highlight_indices = np.arange(len(rangefinder.terrain.points), len(rangefinder.beam_plus_terrain_points))
-    else:
-        highlight_indices = np.concatenate((np.array([incident_index]), np.arange(len(rangefinder.terrain.points), len(rangefinder.beam_plus_terrain_points))))
-    terrain.plot(points=rangefinder.beam_plus_terrain_points, highlight_indices=highlight_indices, matplotlib_3d=False)
+    pose = [0.0, 0.0, -2.0, 0.0, 0.0, 0.0]
+    rangefinder = Rangefinder(terrain, pose)
+    incident_point, incident_index = rangefinder.takeMeasurement(theta=theta, phi=phi, plot=True)
+
     

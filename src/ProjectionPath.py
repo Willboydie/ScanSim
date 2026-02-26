@@ -36,6 +36,8 @@ class ProjectionPath:
 
 
     def plot(self):
+        if self.points is None:
+            raise ValueError("First generate a projection path with projectionPath.generate()")
         plt.scatter(self.points[:, 0], self.points[:, 1])
         plt.axis("equal")
         plt.show()

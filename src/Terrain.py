@@ -1,4 +1,5 @@
 import utils.defaults as defaults
+import utils.constants as constants
 import numpy as np
 from noise import pnoise2 as noise
 import open3d as o3d
@@ -9,8 +10,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class Terrain:
     def __init__(self):
-        self.Lx = defaults.SITE_LENGTH
-        self.resolution = defaults.RESOLUTION
+        self.Lx = constants.SITE_LENGTH
+        self.resolution = constants.RESOLUTION
         self.slope_x_deg = defaults.SLOPE_X_DEG
         self.slope_y_deg = defaults.SLOPE_Y_DEG
         self.base_wavelength = defaults.BASE_WAVELENGTH
@@ -20,6 +21,7 @@ class Terrain:
         self.roughness_amplitude = defaults.ROUGHNESS_AMPLITUDE
         
         self.points = None
+
 
 
     def generate(self, seed, plot=False, save=False):
@@ -78,6 +80,8 @@ class Terrain:
 
 
     def save_to_file(self):
+        if self.points is None:
+            raise ValueError("Must generate a terrain first with generate().")
         timestamp = datetime.now().strftime("%H.%M_%d-%m")
         filename = f"../data/terrains/{timestamp}.bin"
         with open(filename, "wb") as f:
@@ -99,20 +103,32 @@ class Terrain:
             self.plot()
 
 
-    def plot(self, points=None, highlight_indices=None, matplotlib_3d=False):
+    def plot(self, points=None, beam_indices=None, point_index=None, path_indices=None, matplotlib_3d=False):
         if points is None:
+            if self.points is None:
+                raise ValueError("Must generate a terrain first with generate() or specify points using the 'points' argument.")
             points = self.points
+
         # Color by elevation (Z): low = blue/green, high = yellow/red
-        z_min, z_max = points[:, 2].min(), points[:, 2].max()
+        end = len(points)
+        if beam_indices is not None:
+            end -= len(beam_indices)
+
+        z_min, z_max = points[:end, 2].min(), points[:end, 2].max()
         z_norm = (points[:, 2] - z_min) / (z_max - z_min + 1e-8)
         # Simple colormap: blue (0) -> green -> yellow -> red (1)
         r = np.clip(2 * z_norm, 0, 1)
         g = np.clip(2 * (1 - np.abs(z_norm - 0.5)), 0, 1)
         b = np.clip(2 * (1 - z_norm), 0, 1)
         colors = np.column_stack((r, g, b))
-        if highlight_indices is not None:
+        if beam_indices is not None:
             colors = colors.copy()
-            colors[highlight_indices] = [0.0, 0.0, 0.0]
+            colors[beam_indices] = [0.0, 0.0, 0.0]
+        if point_index is not None:
+            colors[point_index] = [1.0, 0.0, 0.0]
+
+        if path_indices is not None:
+            colors[path_indices] = [0.0, 0.0, 0.0]
 
         if matplotlib_3d:
             fig = plt.figure(figsize=(10, 8))
@@ -156,6 +172,7 @@ class Terrain:
         Assumes `self.points` represents a square grid flattened to shape
         (N, 3), ordered row major from `meshgrid` (as in `generate`).
         """
+        
         if divisor <= 1:
             return self.points
 

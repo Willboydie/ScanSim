@@ -1,6 +1,6 @@
 import numpy as np
 import utils.geometry as geometry
-import utils.defaults as defaults
+import utils.constants as constants
 
 class Beam:
     def __init__(self, pose, theta, phi):
@@ -11,7 +11,7 @@ class Beam:
         self.vector = geometry.calculateBeamVector(self.roll, self.pitch, self.yaw, self.theta, self.phi)
         self.plotting_points = self.getPlottingPoints()
 
-    def getPlottingPoints(self, distance=defaults.BEAM_PLOTTING_DISTANCE, density=defaults.BEAM_PLOTTING_DENSITY):
+    def getPlottingPoints(self, distance=constants.BEAM_PLOTTING_DISTANCE, density=constants.BEAM_PLOTTING_DENSITY):
         x_values = np.linspace(self.x_origin, self.x_origin + distance * self.vector[0], density)
         y_values = np.linspace(self.y_origin, self.y_origin + distance * self.vector[1], density)
         z_values = np.linspace(self.z_origin, self.z_origin + distance * self.vector[2], density)
