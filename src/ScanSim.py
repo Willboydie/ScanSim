@@ -46,11 +46,10 @@ if __name__ == "__main__":
     import numpy as np
     scansim = ScanSimulator()
     scansim.terrain.octaves = 100
-    scansim.terrain.roughness_amplitude = 1
+    scansim.terrain.roughness_amplitude = 0.5
     scansim.terrain.generate(seed=12)
     scansim.projectionPath.generate()
     scansim.plotProjectionPath()
     
-    # scansim.rangefinder.pose = [1, 1, 10, 0, 0, 0]
-
+    # scansim.rangefinder.pose = [0, 0, 4, 0, 0, 0]
     # scansim.rangefinder.takeMeasurement(0.0, -np.pi/4, plot=True)

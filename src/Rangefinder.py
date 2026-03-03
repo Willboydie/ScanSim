@@ -28,7 +28,7 @@ class Rangefinder:
         if reduced_target_region_points is None:
             if plot:
                 self.plotSimulatedMeasurement(theta, phi, index=None)
-            return None, None
+            return None
 
         target_region_indices = self.getFullDensityIndices(reduced_target_region_indices)
         target_region_points = self.terrain.points[target_region_indices]
