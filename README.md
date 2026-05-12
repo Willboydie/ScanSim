@@ -1,4 +1,4 @@
-# Adaptive Scanning
+# LiDAR Scanning
 A LiDAR simulation software. Use this repo to generate synthetic terrains and simulate action of a LiDAR module within them.
 
 ## Setup
